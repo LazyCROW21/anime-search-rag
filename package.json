@@ -1,0 +1,21 @@
+{
+  "name": "rag",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/papaparse": "^5.5.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "papaparse": "^5.5.3",
+    "postgres": "^3.4.9"
+  }
+}
