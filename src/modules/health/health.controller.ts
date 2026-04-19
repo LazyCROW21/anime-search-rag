@@ -1,11 +1,9 @@
 import { readFileSync } from "fs";
 import sql from "../../config/db";
-import { animeModel } from "../anime/anime.model";
-import { animeService } from "../anime/anime.service";
 import { logger } from "../../utils/logger";
 
 export class HealthController {
-    public async check(req: Request) {
+    public async check() {
         let isDbReady = false;
         try {
             // Check if anime table exists and has entries
@@ -15,34 +13,29 @@ export class HealthController {
             isDbReady = false;
         }
 
-        const stats = await animeService.getStats();
-        return Response.json({
+        return {
             uptime: process.uptime(),
             database: isDbReady ? "CONNECTED" : "NOT_READY",
             appStatus: isDbReady ? "OK" : "DATABASE_NOT_READY",
-            ...stats,
-        });
+        };
     }
 
-    public async reset(req: Request) {
+    public async reset() {
         try {
-            const schema = readFileSync("src/db/schema.sql", "utf8");
+            const schema = readFileSync("db/schema.sql", "utf8");
             // The sql.unsafe() method allows running multiple statements from a string
             await sql.unsafe(schema);
 
-            // Seed the database
-            const count = await animeModel.seed();
-
-            return Response.json({
+            return {
                 status: "SUCCESS",
-                message: `Database has been reset and seeded with ${count} entries.`
-            });
+                message: "Database has been reset."
+            };
         } catch (error: any) {
             logger.error("❌ Database reset failed:", error);
-            return Response.json({
+            return {
                 status: "ERROR",
                 message: error.message
-            }, { status: 500 });
+            };
         }
     }
 }

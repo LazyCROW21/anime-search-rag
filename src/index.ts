@@ -1,39 +1,42 @@
-import { config } from "./config";
-import sql from "./config/db";
-import { animeRoutes } from "./modules/anime/anime.routes";
-import { healthRoutes } from "./modules/health/health.routes";
-import { logger } from "./utils/logger";
+import { Hono } from 'hono';
+import { config } from './config';
+import sql from './config/db';
+import { animeRoutes } from './modules/anime/anime.routes';
+import { healthRoutes } from './modules/health/health.routes';
+import { logger } from './utils/logger';
+
+const app = new Hono();
+
+// Health routes
+app.route('/health', healthRoutes);
+
+// Anime routes
+app.route('/api', animeRoutes);
+
+// Database readiness check middleware
+app.use('*', async (c, next) => {
+    if (c.req.path.startsWith('/health')) {
+        return next();
+    }
+
+    try {
+        const result = await sql`SELECT count(*) FROM anime`;
+        const isReady = !!(result && result[0] && parseInt(result[0].count) >= 0);
+        if (!isReady) throw new Error('Database not ready');
+    } catch (error) {
+        return c.json({
+            status: 'DATABASE_NOT_READY',
+            message: 'Database setup is incomplete.',
+            error: (error as any).message
+        }, 503);
+    }
+
+    return next();
+});
 
 logger.info(`📡 Starting Anime Search API on port ${config.port}...`);
 
-const server = Bun.serve({
+export default {
     port: config.port,
-    async fetch(req) {
-        // Handle health routes first (bypass DB check)
-        const healthResponse = await healthRoutes(req);
-        if (healthResponse) return healthResponse;
-
-        // Check if database is ready for other requests
-        try {
-            const result = await sql`SELECT count(*) FROM anime`;
-            const isReady = !!(result && result[0] && parseInt(result[0].count) >= 0);
-            if (!isReady) throw new Error("Database not ready");
-        } catch (error) {
-            return Response.json({
-                status: "DATABASE_NOT_READY",
-                message: "Database setup is incomplete. Please call /health/reset to initialize.",
-                error: (error as any).message
-            }, { status: 503 });
-        }
-
-        // Handle anime routes
-        const animeResponse = await animeRoutes(req);
-        if (animeResponse) return animeResponse;
-
-        return new Response("Not Found", { status: 404 });
-    },
-});
-
-
-
-logger.info(`📡 Server running at http://localhost:${server.port}`);
+    fetch: app.fetch,
+};

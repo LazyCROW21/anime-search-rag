@@ -1,14 +1,16 @@
-import { healthController } from "./health.controller";
+import { Hono } from 'hono';
+import { healthController } from './health.controller';
 
-export const healthRoutes = (req: Request) => {
-    const url = new URL(req.url);
+const app = new Hono();
 
-    if (url.pathname === "/health") {
-        return healthController.check(req);
-    }
-    if (url.pathname === "/health/reset") {
-        return healthController.reset(req);
-    }
+app.get('/', async (c) => {
+    const result = await healthController.check();
+    return c.json(result);
+});
 
-    return null;
-};
+app.post('/reset', async (c) => {
+    const result = await healthController.reset();
+    return c.json(result);
+});
+
+export { app as healthRoutes };
