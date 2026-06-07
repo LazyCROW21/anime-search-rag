@@ -1,6 +1,6 @@
-import sql from '../config/db';
-import { embedText } from './embedding';
-import { logger } from '../utils/logger';
+import sql from '../../config/db';
+import { embedText } from '../embedding/embedding.service';
+import { logger } from '../../utils/logger';
 
 const BATCH_SIZE = 20;
 
@@ -19,8 +19,8 @@ export async function embedAllAnime(): Promise<void> {
     let total = 0;
 
     // Get total count first
-    const countResult = await sql`SELECT COUNT(*) as total FROM anime WHERE embedding IS NULL`;
-    total = parseInt(countResult[0].total);
+    const countResult: any = await sql`SELECT COUNT(*) as total FROM anime WHERE embedding IS NULL`;
+    total = parseInt(countResult?.[0]?.total || '0');
 
     if (total === 0) {
         logger.info('All anime are already embedded');

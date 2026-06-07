@@ -1,6 +1,8 @@
-import { readFileSync } from "fs";
+import { readFileSync, readdirSync } from "fs";
+import { join } from "path";
 import sql from "../../config/db";
 import { logger } from "../../utils/logger";
+import { animeModel } from "../anime/anime.model";
 
 export class HealthController {
     public async check() {
@@ -22,13 +24,25 @@ export class HealthController {
 
     public async reset() {
         try {
-            const schema = readFileSync("db/schema.sql", "utf8");
-            // The sql.unsafe() method allows running multiple statements from a string
-            await sql.unsafe(schema);
+            const dbFolder = join(process.cwd(), "src", "db");
+            const files = readdirSync(dbFolder)
+                .filter(file => file.endsWith(".sql"))
+                .sort();
+
+            for (const file of files) {
+                const filePath = join(dbFolder, file);
+                const schema = readFileSync(filePath, "utf8");
+                logger.info(`🔄 Running SQL file: ${file}`);
+                // The sql.unsafe() method allows running multiple statements from a string
+                await sql.unsafe(schema);
+            }
+
+            // Seed the database
+            const count = await animeModel.seed();
 
             return {
                 status: "SUCCESS",
-                message: "Database has been reset."
+                message: `Database has been reset with all schema files and seeded with ${count} anime entries.`
             };
         } catch (error: any) {
             logger.error("❌ Database reset failed:", error);

@@ -1,0 +1,18 @@
+services:
+  db:
+    build: .
+    container_name: anime_search_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: argusadmin
+      POSTGRES_DB: anime_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount the init script to enable the vector extension automatically
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+volumes:
+  postgres_data:

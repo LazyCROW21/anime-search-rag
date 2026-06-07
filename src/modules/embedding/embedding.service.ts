@@ -1,5 +1,5 @@
-import { config } from '../config';
-import { logger } from '../utils/logger';
+import { config } from '../../config';
+import { logger } from '../../utils/logger';
 
 const OLLAMA_URL = config.ollama.url;
 const MODEL = config.ollama.model;
@@ -42,7 +42,7 @@ export async function embedText(text: string): Promise<number[]> {
                 throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
             }
 
-            const data = await response.json();
+            const data: any = await response.json();
 
             if (!data.embedding || !Array.isArray(data.embedding)) {
                 throw new Error('Invalid embedding response from Ollama');
